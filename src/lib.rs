@@ -2,15 +2,9 @@
 use args::CotpArgs;
 use clap::Parser;
 use color_eyre::eyre::eyre;
-use interface::app::AppResult;
-use interface::event::{Event, EventHandler};
-use interface::handler::handle_key_events;
-use interface::ui::Tui;
 use otp::otp_element::{OTPDatabase, CURRENT_DATABASE_VERSION};
-use ratatui::prelude::CrosstermBackend;
-use ratatui::Terminal;
 use reading::{get_elements_from_input, get_elements_from_stdin, ReadResult};
-use std::{io, vec};
+use std::{error, vec};
 use zeroize::Zeroize;
 
 mod args;
@@ -19,13 +13,15 @@ mod clipboard;
 mod crypto;
 mod exporters;
 mod importers;
-mod interface;
 mod otp;
 mod path;
 mod reading;
 mod utils;
 
-fn init(read_password_from_stdin: bool) -> color_eyre::Result<ReadResult> {
+/// Application result type.
+pub type AppResult<T> = Result<T, Box<dyn error::Error>>;
+
+pub fn init(read_password_from_stdin: bool) -> color_eyre::Result<ReadResult> {
     match utils::init_app() {
         Ok(first_run) => {
             if first_run {
@@ -49,7 +45,7 @@ fn init(read_password_from_stdin: bool) -> color_eyre::Result<ReadResult> {
     }
 }
 
-fn main() -> AppResult<()> {
+pub fn main() -> AppResult<()> {
     color_eyre::install()?;
 
     let cotp_args: CotpArgs = CotpArgs::parse();
@@ -86,41 +82,4 @@ fn main() -> AppResult<()> {
     };
     key.zeroize();
     std::process::exit(error_code)
-}
-
-fn dashboard(mut database: OTPDatabase) -> AppResult<OTPDatabase> {
-    if database.elements_ref().is_empty() {
-        println!("No codes, type \"cotp -h\" to get help");
-    } else {
-        // Create an application.
-        let mut app = interface::app::App::new(&mut database);
-
-        // Initialize the terminal user interface.
-        let backend = CrosstermBackend::new(io::stderr());
-        let terminal = Terminal::new(backend)?;
-        let events = EventHandler::new(250);
-        let mut tui = Tui::new(terminal, events);
-        tui.init()?;
-
-        // Start the main loop.
-        while app.running {
-            // Render the user interface.
-            tui.draw(&mut app)?;
-            // Handle events.
-            match tui.events.next()? {
-                Event::Tick => app.tick(false),
-                Event::Key(key_event) => handle_key_events(key_event, &mut app)?,
-                Event::Mouse(_) => {}
-                Event::Resize(_, _) => {}
-                Event::FocusGained() => {}
-                Event::FocusLost() => {}
-                Event::Paste(_) => {}
-            }
-        }
-
-        // Exit the user interface.
-        tui.exit()?;
-    }
-
-    Ok(database)
 }

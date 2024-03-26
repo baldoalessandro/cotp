@@ -4,7 +4,7 @@ use clap::{Args, Parser, Subcommand};
 use color_eyre::eyre::eyre;
 
 use crate::{
-    argument_functions, dashboard,
+    argument_functions,
     otp::{otp_algorithm::OTPAlgorithm, otp_element::OTPDatabase, otp_type::OTPType},
 };
 
@@ -246,7 +246,7 @@ pub fn args_parser(matches: CotpArgs, read_result: OTPDatabase) -> color_eyre::R
         Some(CotpSubcommands::Extract(args)) => argument_functions::extract(args, read_result),
         Some(CotpSubcommands::Passwd) => argument_functions::change_password(read_result),
         // no args, show dashboard
-        None => dashboard(read_result).map_err(|e| eyre!("An error occurred: {e}")),
+        None => Err(eyre!("An error occurred")),
     }
 }
 
