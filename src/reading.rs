@@ -21,7 +21,7 @@ pub fn get_elements_from_stdin() -> color_eyre::Result<ReadResult> {
     Err(eyre!("Failure during stdin reading"))
 }
 
-fn get_elements_with_password(mut password: String) -> color_eyre::Result<ReadResult> {
+pub fn get_elements_with_password(mut password: String) -> color_eyre::Result<ReadResult> {
     let (elements, key, salt) = read_from_file(&password)?;
     password.zeroize();
     Ok((elements, key, salt))

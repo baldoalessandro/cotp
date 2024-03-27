@@ -4,6 +4,7 @@ use clap::Parser;
 use color_eyre::eyre::eyre;
 use otp::otp_element::{OTPDatabase, CURRENT_DATABASE_VERSION};
 use reading::{get_elements_from_input, get_elements_from_stdin, ReadResult};
+pub use reading::get_elements_with_password;
 use std::{error, vec};
 use zeroize::Zeroize;
 
@@ -13,7 +14,7 @@ mod clipboard;
 mod crypto;
 mod exporters;
 mod importers;
-mod otp;
+pub mod otp;
 mod path;
 mod reading;
 mod utils;
